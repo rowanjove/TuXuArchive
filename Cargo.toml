@@ -5,5 +5,5 @@ members = ["crates/tuxu-core", "src-tauri", "launcher"]
 [workspace.package]
 version = "1.0.0"
 edition = "2021"
-license = "UNLICENSED"
+license = "Apache-2.0"
 publish = false
