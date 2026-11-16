@@ -1,0 +1,7 @@
+[build]
+# Keep host build scripts/proc macros separate from the static-CRT Windows target.
+target = "x86_64-pc-windows-msvc"
+
+[target.x86_64-pc-windows-msvc]
+# Rust equivalent of MSVC /MT; cc also passes /MT to bundled C dependencies.
+rustflags = ["-C", "target-feature=+crt-static"]

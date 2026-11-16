@@ -1,0 +1,11 @@
+/node_modules/
+/dist/
+/src-tauri/target/
+/src-tauri/gen/
+/target/
+/launcher/target/
+/dist-release/
+/dist-portable/
+/dist-candidate/
+*.log
+.DS_Store

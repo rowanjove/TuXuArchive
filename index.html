@@ -1,0 +1,780 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>图序归档 — 通用图片批量分类与重命名工具</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='3' y='3' width='58' height='58' rx='14' fill='%23ffffff' stroke='%23d6e2f4' stroke-width='2'/%3E%3Crect x='21' y='12' width='29' height='21' rx='4' fill='%2393c5fd'/%3E%3Crect x='17' y='17' width='31' height='22' rx='4.5' fill='%233b82f6'/%3E%3Cpath d='M13 24a4 4 0 0 1 4-4h11l4 4h15a4 4 0 0 1 4 4v18a5 5 0 0 1-5 5H18a5 5 0 0 1-5-5V24z' fill='%231d63ed'/%3E%3Crect x='18' y='31' width='13' height='13' rx='2.5' fill='none' stroke='%23ffffff' stroke-width='2.2'/%3E%3Ccircle cx='22' cy='35' r='1.4' fill='%23ffffff'/%3E%3Cpath d='M19.5 42l4.2-4.5 4.8 4.5' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='35' y='32.5' width='12' height='2.4' rx='1.2' fill='%23ffffff'/%3E%3Crect x='35' y='37' width='12' height='2.4' rx='1.2' fill='%23ffffff'/%3E%3Crect x='35' y='41.5' width='8.5' height='2.4' rx='1.2' fill='%23bfdbfe'/%3E%3C/svg%3E" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand-group">
+        <div class="brand-logo" aria-hidden="true">
+          <svg viewBox="0 0 64 64" width="28" height="28">
+            <rect x="3" y="3" width="58" height="58" rx="14" fill="#ffffff" stroke="#d6e2f4" stroke-width="2.5"/>
+            <rect x="21" y="12" width="29" height="21" rx="4" fill="#93c5fd"/>
+            <rect x="17" y="17" width="31" height="22" rx="4.5" fill="#3b82f6"/>
+            <path d="M13 24a4 4 0 0 1 4-4h11l4 4h15a4 4 0 0 1 4 4v18a5 5 0 0 1-5 5H18a5 5 0 0 1-5-5V24z" fill="#1d63ed"/>
+            <rect x="18" y="31" width="13" height="13" rx="2.5" fill="none" stroke="#ffffff" stroke-width="2.2"/>
+            <circle cx="22" cy="35" r="1.4" fill="#ffffff"/>
+            <path d="M19.5 42l4.2-4.5 4.8 4.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="35" y="32.5" width="12" height="2.4" rx="1.2" fill="#ffffff"/>
+            <rect x="35" y="37" width="12" height="2.4" rx="1.2" fill="#ffffff"/>
+            <rect x="35" y="41.5" width="8.5" height="2.4" rx="1.2" fill="#bfdbfe"/>
+          </svg>
+        </div>
+        <span class="brand-title">图序归档</span>
+        <span id="top-context" class="context-chip">等待导入图片</span>
+      </div>
+
+      <nav class="stepper" aria-label="归档流程步骤">
+        <button id="step-btn-import" type="button" class="step-btn active" data-step="import">
+          <span class="step-num">1</span><span>导入与位置</span>
+        </button>
+        <button id="step-btn-rules" type="button" class="step-btn" data-step="rules" disabled title="请先导入源图片文件夹">
+          <span class="step-num">2</span><span>分类与命名</span>
+        </button>
+        <button id="step-btn-preview" type="button" class="step-btn" data-step="preview" disabled title="请先导入源图片文件夹">
+          <span class="step-num">3</span><span>预览与调整</span>
+        </button>
+        <button id="step-btn-archive" type="button" class="step-btn" data-step="archive" disabled title="请先导入源图片文件夹">
+          <span class="step-num">4</span><span>核对与归档</span>
+        </button>
+      </nav>
+
+      <div class="topbar-actions">
+        <button id="btn-top-help" type="button" class="small help-trigger-btn" title="查看当前步骤说明 (F1)">
+          <span class="help-qmark">?</span><span>使用说明</span>
+        </button>
+        <button id="btn-undo" type="button" class="small" disabled title="撤销上一步调整 (Ctrl+Z)">撤销</button>
+        <button id="btn-redo" type="button" class="small" disabled title="重做 (Ctrl+Y)">重做</button>
+        <div class="manage-wrap">
+          <button id="btn-manage" type="button" class="small" aria-expanded="false" aria-controls="manage-menu">方案与设置 ▾</button>
+          <div id="manage-menu" class="manage-menu hidden" role="menu">
+            <div class="menu-group-label">方案与标签</div>
+            <button id="nav-presets" type="button" data-view="presets">分类方案库</button>
+            <button id="nav-tags" type="button" data-view="tags">自定义标签库</button>
+            <button id="nav-templates" type="button" data-view="templates">任务模板复用</button>
+            <div class="menu-group-label">记录与系统</div>
+            <button id="nav-history" type="button" data-view="history">草稿与归档历史</button>
+            <button id="nav-settings" type="button" data-view="settings">软件设置与诊断</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div id="status-bar" class="status-bar hidden" role="status" aria-live="polite">
+      <span id="status-text"></span>
+      <div class="row-flex">
+        <button id="status-action" type="button" class="small hidden"></button>
+        <button id="status-close" type="button" class="small ghost">关闭</button>
+      </div>
+    </div>
+
+    <main class="main-area">
+      <!-- Step 1: 导入图片与设置输出位置 -->
+      <section id="step-import" class="view-panel">
+        <div class="home-welcome-bar">
+          <div class="col-flex" style="gap:2px">
+            <h1 class="hero-title">第 ① 步：导入图片与设置输出位置</h1>
+            <div class="muted" style="font-size:14px">选择待整理的源图片文件夹和归档输出目录；全程只读复制，绝不修改或移动原图。</div>
+          </div>
+          <button id="btn-save-as-template" type="button" class="small hidden">保存当前配置为模板</button>
+        </div>
+
+        <div class="import-grid">
+          <div class="card col-flex scroll-y" style="min-height:0;gap:12px">
+            <div id="drop-zone" class="drop-zone grow">
+              <div class="drop-icon" aria-hidden="true">
+                <svg viewBox="0 0 64 64" width="38" height="38">
+                  <rect x="4" y="4" width="56" height="56" rx="14" fill="currentColor" opacity="0.1"/>
+                  <path d="M18 42V22a4 4 0 0 1 4-4h8l4 4h12a4 4 0 0 1 4 4v16a4 4 0 0 1-4 4H22a4 4 0 0 1-4-4z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/>
+                  <path d="M32 38V27m0 0l-4.5 4.5M32 27l4.5 4.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div style="font-size:16.5px;font-weight:700">拖入图片文件夹，或点击下方按钮浏览选择</div>
+              <div class="row-flex" style="flex-wrap:wrap;justify-content:center">
+                <button id="btn-pick-folder" type="button" class="primary">选择源图片文件夹</button>
+                <button id="btn-rescan" type="button" class="hidden">重新扫描</button>
+                <label class="row-flex muted" style="font-size:14px;cursor:pointer;padding:0 6px">
+                  <input id="chk-recursive" type="checkbox" />
+                  <span>包含子文件夹（默认关闭）</span>
+                </label>
+              </div>
+
+              <div id="scan-progress-box" class="col-flex hidden" style="width:100%;max-width:460px;align-items:center">
+                <div class="progress-track"><div id="scan-progress-fill" class="progress-fill"></div></div>
+                <div class="row-flex" style="justify-content:space-between;width:100%;font-size:13.5px">
+                  <span id="scan-progress-text" class="muted">正在扫描图片...</span>
+                  <button id="btn-cancel-scan" type="button" class="small danger">取消扫描</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="path-pair-grid">
+              <div class="path-slot-card">
+                <div class="row-flex" style="justify-content:space-between">
+                  <span style="font-weight:700">1. 源图片文件夹</span>
+                  <span id="scan-folder-badge" class="pill">未选择</span>
+                </div>
+                <div id="scan-folder-label" class="path-display-box muted mono">请拖入或选择待整理的图片目录</div>
+                <div id="scan-stats-text" class="muted" style="font-size:13.5px">支持 JPG / PNG / BMP / WEBP / TIFF / HEIC / RAW 等常见格式</div>
+              </div>
+
+              <div class="path-slot-card">
+                <div class="row-flex" style="justify-content:space-between">
+                  <span style="font-weight:700">2. 归档输出根目录（自动记忆）</span>
+                  <button id="btn-import-pick-output" type="button" class="small">选择 / 更改</button>
+                </div>
+                <div id="import-output-label" class="path-display-box muted mono">尚未设置输出目录</div>
+                <div id="import-output-note" class="muted" style="font-size:13.5px">必须位于源目录之外，复制归档绝不改动原图</div>
+              </div>
+            </div>
+
+            <div class="row-flex" style="gap:10px;flex-wrap:wrap">
+              <label for="task-name-input" style="font-weight:600;white-space:nowrap">归档任务名称：</label>
+              <input id="task-name-input" class="grow" placeholder="例如：2026五一旅行（若目录层级包含任务名则作为顶层目录）" />
+            </div>
+
+            <div id="import-path-check" class="path-check-banner info">
+              <div id="import-path-check-title" style="font-weight:700">请先选择源图片文件夹和输出位置</div>
+              <div id="import-path-check-detail" style="font-size:13.5px">导入并确认输出位置后，即可进入下一步设置分类与命名规则。</div>
+            </div>
+
+            <div id="scan-summary-card" class="col-flex hidden" style="gap:8px">
+              <div id="scan-warning-wrap" class="row-flex hidden" style="justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;background:var(--warn-soft);border:1px solid #eec58a;font-size:13.5px;color:var(--warn)">
+                <div id="scan-warning-line" class="grow" style="min-width:0"></div>
+                <button id="btn-review-time-anomaly" type="button" class="small hidden" style="flex-shrink:0">查看时间异常</button>
+              </div>
+              <div id="scan-quality-bar" class="quality-summary-bar hidden">
+                <div class="row-flex grow" style="gap:8px;flex-wrap:wrap;min-width:0">
+                  <span id="scan-quality-pill" class="pill">画质未检测</span>
+                  <span id="scan-quality-text" style="font-size:13.5px"></span>
+                </div>
+                <div class="row-flex" style="gap:6px;flex-shrink:0">
+                  <button id="btn-inspect-quality" type="button" class="small">检测图片画质</button>
+                  <button id="btn-cancel-quality" type="button" class="small hidden">停止检测</button>
+                </div>
+              </div>
+              <div id="quality-progress-box" class="hidden" style="display:flex;flex-direction:column;gap:5px">
+                <div id="quality-progress-text" class="muted" style="font-size:13px">正在检测画质...</div>
+                <div class="progress-track"><div id="quality-progress-fill" class="progress-fill"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card col-flex" style="min-height:0;gap:10px">
+            <div class="card-header">
+              <h2 class="card-title">继续上次任务 & 快捷模板</h2>
+              <button id="btn-open-history" type="button" class="small">全部历史 →</button>
+            </div>
+            <div id="recovery-banner" class="hidden" style="padding:9px 12px;border-radius:8px;background:var(--warn-soft);border:1px solid #eec58a;font-size:13.5px"></div>
+            <div id="recent-drafts-list" class="col-flex scroll-y grow" style="gap:8px">
+              <div class="muted">暂无未完成草稿，可从左侧导入图片开始新任务。</div>
+            </div>
+            <div style="border-top:1px solid var(--border);padding-top:10px">
+              <div class="row-flex" style="justify-content:space-between;margin-bottom:6px">
+                <span style="font-weight:700;font-size:14px">常用任务模板</span>
+                <button id="btn-open-templates" type="button" class="small ghost">管理模板</button>
+              </div>
+              <div id="quick-templates-list" class="col-flex" style="gap:6px;max-height:140px;overflow-y:auto"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-footer">
+          <div class="step-footer-left"><span class="pill info">步骤 1 / 4</span></div>
+          <div id="import-footer-hint" class="step-footer-hint">请先选择源图片文件夹和归档输出目录</div>
+          <div class="step-footer-right">
+            <button id="btn-goto-rules" type="button" class="primary" disabled>下一步：分类与命名规则 →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 2: 分类、目录层级与命名规则 -->
+      <section id="step-rules" class="view-panel hidden">
+        <div class="rules-layout">
+          <!-- Left: 目录层级 & 命名规则配置 + 实时预览 -->
+          <div class="card col-flex scroll-y" style="min-height:0;gap:12px">
+            <div class="card-header">
+              <h2 class="card-title">1. 目录层级与命名规则</h2>
+              <span class="pill info">支持同分类多图连号</span>
+            </div>
+
+            <div class="config-block">
+              <div class="config-label">输出目录层级结构</div>
+              <div id="dir-layout-grid" class="dir-layout-grid"></div>
+              <div id="custom-dir-row" class="row-flex hidden" style="margin-top:8px">
+                <input id="custom-dir-input" class="grow mono" placeholder="如 {task}/{year}/{group}（支持 {task} {group} {date} {year} {month}）" />
+                <button id="btn-apply-custom-dir" type="button" class="small">应用</button>
+              </div>
+            </div>
+
+            <div class="config-block col-flex" style="gap:8px">
+              <div class="row-flex" style="justify-content:space-between">
+                <span class="config-label">文件命名规则</span>
+                <select id="naming-preset-select" aria-label="命名预设模板"></select>
+              </div>
+
+              <div class="naming-form-grid">
+                <div class="field-cell">
+                  <label for="rule-prefix">自定义前缀</label>
+                  <input id="rule-prefix" placeholder="如 IMG_ 或留空" />
+                </div>
+                <div class="field-cell">
+                  <label for="rule-suffix">自定义后缀</label>
+                  <input id="rule-suffix" placeholder="如 _成片 或留空" />
+                </div>
+                <div class="field-cell">
+                  <label for="rule-date-format">日期格式</label>
+                  <select id="rule-date-format">
+                    <option value="YYYYMMDD">20260501</option>
+                    <option value="YYYY-MM-DD">2026-05-01</option>
+                    <option value="YYYYMMDD_HHMMSS">20260501_102030</option>
+                    <option value="none">不包含日期</option>
+                  </select>
+                </div>
+                <div class="field-cell">
+                  <label for="rule-separator">段间连接符</label>
+                  <select id="rule-separator">
+                    <option value="_">下划线 _</option>
+                    <option value="-">短横线 -</option>
+                    <option value=" ">空格</option>
+                    <option value="">无分隔符</option>
+                  </select>
+                </div>
+                <div class="field-cell">
+                  <label for="rule-seq-scope">连续编号方式</label>
+                  <select id="rule-seq-scope">
+                    <option value="per_group">按分类从 1 独立编号</option>
+                    <option value="global">全局连续编号</option>
+                    <option value="none">不加编号</option>
+                  </select>
+                </div>
+                <div class="field-cell">
+                  <label for="rule-seq-digits">编号位数 & 起始值</label>
+                  <div class="row-flex" style="gap:6px">
+                    <select id="rule-seq-digits" style="flex:1">
+                      <option value="2">2位 (01)</option>
+                      <option value="3">3位 (001)</option>
+                      <option value="4">4位 (0001)</option>
+                    </select>
+                    <input id="rule-seq-start" type="number" min="1" max="99999" value="1" style="width:76px" title="起始编号" />
+                  </div>
+                </div>
+              </div>
+
+              <div class="row-flex" style="flex-wrap:wrap;gap:14px;padding-top:2px">
+                <label class="row-flex" style="font-size:13.5px;cursor:pointer">
+                  <input id="chk-rule-group" type="checkbox" checked />
+                  <span>包含分类名</span>
+                </label>
+                <label class="row-flex" style="font-size:13.5px;cursor:pointer">
+                  <input id="chk-rule-tag" type="checkbox" />
+                  <span>包含单张标签</span>
+                </label>
+                <label class="row-flex" style="font-size:13.5px;cursor:pointer">
+                  <input id="chk-rule-orig" type="checkbox" />
+                  <span>保留原文件名</span>
+                </label>
+              </div>
+
+              <div id="custom-pattern-row" class="col-flex hidden" style="gap:4px">
+                <label for="rule-pattern-input" style="font-size:13px;font-weight:600">自定义命名模板（支持 {prefix} {date} {group} {tag} {orig} {seq} {suffix}）：</label>
+                <input id="rule-pattern-input" class="mono" placeholder="{date}_{group}_{seq}" />
+              </div>
+
+              <div class="row-flex" style="justify-content:flex-end">
+                <button id="btn-apply-naming-rule" type="button" class="small primary">应用命名规则</button>
+              </div>
+            </div>
+
+            <div class="live-preview-box">
+              <div style="font-size:12.5px;font-weight:700;color:var(--accent)">输出路径实时预览示例</div>
+              <div id="rules-live-sample" class="mono" style="font-size:13.5px;word-break:break-all;margin-top:4px">示例归档任务\风景\20260501_风景_001.jpg</div>
+            </div>
+          </div>
+
+          <!-- Right: 4种批量分组方式 + 当前分类管理 -->
+          <div class="card col-flex" style="min-height:0;gap:10px">
+            <div class="row-flex" style="justify-content:space-between;flex-wrap:wrap">
+              <div class="row-flex">
+                <h2 class="card-title">2. 批量分组与分类管理</h2>
+                <span id="rules-alloc-pill" class="pill info">已归类 0 / 0 张</span>
+              </div>
+              <div class="seg-tabs" role="tablist" aria-label="分组方式">
+                <button id="tab-grp-time" type="button" class="active" data-grp-mode="time">按时间分组</button>
+                <button id="tab-grp-count" type="button" data-grp-mode="count">按数量分组</button>
+                <button id="tab-grp-preset" type="button" data-grp-mode="preset">按预设方案</button>
+                <button id="tab-grp-manual" type="button" data-grp-mode="manual">手动选择</button>
+              </div>
+            </div>
+
+            <!-- Mode A: 按时间 -->
+            <div id="grp-pane-time" class="grp-mode-pane">
+              <div class="row-flex" style="flex-wrap:wrap;gap:8px">
+                <button id="btn-grp-by-day" type="button" class="small primary">按拍摄日期（每天一组）</button>
+                <button id="btn-grp-by-month" type="button" class="small">按拍摄月份（每月一组）</button>
+                <span style="width:1px;height:20px;background:var(--border)"></span>
+                <label class="row-flex" style="font-size:13.5px;gap:6px">
+                  <span>间隔超过</span>
+                  <input id="input-gap-minutes" type="number" min="1" max="10080" value="60" style="width:72px" />
+                  <span>分钟自动分批</span>
+                </label>
+                <button id="btn-grp-by-gap" type="button" class="small">按间隔分批</button>
+              </div>
+            </div>
+
+            <!-- Mode B: 按数量 -->
+            <div id="grp-pane-count" class="grp-mode-pane hidden">
+              <div class="row-flex" style="flex-wrap:wrap;gap:8px">
+                <label class="row-flex" style="font-size:13.5px;gap:6px">
+                  <span>每组固定</span>
+                  <input id="input-fixed-size" type="number" min="1" max="9999" value="10" style="width:76px" />
+                  <span>张</span>
+                </label>
+                <input id="input-fixed-prefix" value="分组" placeholder="组名前缀" style="width:100px" />
+                <button id="btn-grp-fixed-size" type="button" class="small primary">生成等量分组</button>
+                <span style="width:1px;height:20px;background:var(--border)"></span>
+                <button id="btn-grp-even" type="button" class="small">均分到现有分类</button>
+                <button id="btn-grp-paste-counts" type="button" class="small">指定各分类张数…</button>
+              </div>
+            </div>
+
+            <!-- Mode C: 按预设方案 -->
+            <div id="grp-pane-preset" class="grp-mode-pane hidden">
+              <div class="row-flex" style="flex-wrap:wrap;gap:8px">
+                <select id="rules-preset-select" class="grow" style="min-width:200px"></select>
+                <label class="row-flex" style="font-size:13.5px;cursor:pointer">
+                  <input id="chk-preset-even" type="checkbox" checked />
+                  <span>均分图片</span>
+                </label>
+                <label class="row-flex" style="font-size:13.5px;cursor:pointer">
+                  <input id="chk-preset-naming" type="checkbox" />
+                  <span>同时套用方案命名规则</span>
+                </label>
+                <button id="btn-apply-preset-groups" type="button" class="small primary">套用预设方案</button>
+              </div>
+            </div>
+
+            <!-- Mode D: 手动多选 -->
+            <div id="grp-pane-manual" class="grp-mode-pane hidden col-flex" style="gap:8px">
+              <div class="row-flex" style="flex-wrap:wrap;gap:8px">
+                <input id="input-manual-group-name" placeholder="输入新分类名称（或选右侧已有分类）" style="width:210px" />
+                <button id="btn-manual-assign-new" type="button" class="small primary">选中图片新建并归类</button>
+                <select id="select-manual-target-group" style="min-width:140px"></select>
+                <button id="btn-manual-assign-existing" type="button" class="small">归入选中分类</button>
+                <span id="manual-select-count" class="muted" style="font-size:13px">已选 0 张（支持 Ctrl/Shift 多选）</span>
+              </div>
+              <div id="manual-thumb-grid" class="manual-thumb-grid"></div>
+            </div>
+
+            <!-- Groups summary & editor -->
+            <div class="row-flex" style="justify-content:space-between;flex-wrap:wrap;padding-top:4px;border-top:1px solid var(--border)">
+              <div class="row-flex" style="gap:6px">
+                <input id="input-add-group" placeholder="新增分类名称…" style="width:170px" />
+                <button id="btn-add-group" type="button" class="small">＋ 添加分类</button>
+                <button id="btn-batch-edit-groups" type="button" class="small">批量录入分类…</button>
+              </div>
+              <button id="btn-sort-groups" type="button" class="small">按名称排序</button>
+            </div>
+            <div id="groups-manage-list" class="col-flex scroll-y grow" style="gap:6px;padding-right:2px"></div>
+          </div>
+        </div>
+
+        <div class="step-footer">
+          <div class="step-footer-left">
+            <button id="btn-back-to-import" type="button">← 上一步：导入与位置</button>
+          </div>
+          <div id="rules-footer-hint" class="step-footer-hint">设置好目录层级、命名规则和分组后，进入预览调整</div>
+          <div class="step-footer-right">
+            <button id="btn-goto-preview" type="button" class="primary">下一步：预览与调整 →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 3: 预览与调整 -->
+      <section id="step-preview" class="view-panel hidden">
+        <!-- Default Batch Preview Surface -->
+        <div id="preview-batch" class="col-flex grow" style="min-height:0;gap:10px">
+          <div class="batch-toolbar">
+            <div class="batch-toolbar-main">
+              <div class="row-flex" style="flex-wrap:wrap;gap:8px">
+                <span class="batch-toolbar-label">快捷整理</span>
+                <button id="btn-preview-confirm-all" type="button" class="small primary">全部确认就绪</button>
+                <button id="btn-preview-sort-time" type="button" class="small">按拍摄时间排序</button>
+                <button id="btn-preview-sort-name" type="button" class="small">按原文件名排序</button>
+                <button id="btn-preview-save-scheme" type="button" class="small">存为分类方案</button>
+              </div>
+              <div class="row-flex" style="flex-wrap:wrap;gap:8px">
+                <input id="preview-search-input" placeholder="搜索文件名 / 分类 / 目标路径..." style="width:220px" />
+                <button id="btn-open-detail-mode" type="button" class="small">大图逐张精修</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="batch-workspace">
+            <!-- Left Rail: Groups -->
+            <div class="card col-flex" style="min-height:0;gap:8px">
+              <div class="seg-tabs compact" style="display:grid;grid-template-columns:repeat(4,1fr)">
+                <button type="button" class="active" data-grp-filter="all">全部</button>
+                <button type="button" data-grp-filter="ungrouped">未分类</button>
+                <button type="button" data-grp-filter="review">待核对</button>
+                <button type="button" data-grp-filter="ready">已就绪</button>
+              </div>
+              <div id="preview-group-cards" class="col-flex scroll-y grow" style="gap:7px;padding-right:2px"></div>
+            </div>
+
+            <!-- Right Pane: Photo Target Preview List -->
+            <div class="card col-flex" style="min-height:0;gap:8px">
+              <div class="row-flex" style="justify-content:space-between;flex-wrap:wrap;gap:8px;border-bottom:1px solid var(--border);padding-bottom:8px">
+                <div class="row-flex" style="gap:8px;flex-wrap:wrap">
+                  <h2 id="preview-pane-title" class="card-title">全部图片预览</h2>
+                  <span id="preview-pane-pill" class="pill info">0 张</span>
+                </div>
+                <div class="row-flex" style="gap:6px;flex-wrap:wrap">
+                  <button id="btn-preview-select-all" type="button" class="small">全选当前页</button>
+                  <select id="preview-batch-move-select" aria-label="批量移动到的分类" style="min-width:130px"></select>
+                  <button id="btn-preview-batch-move" type="button" class="small">移入该分类</button>
+                  <select id="preview-batch-tag-select" aria-label="批量设置的标签" style="min-width:120px"></select>
+                  <button id="btn-preview-batch-tag" type="button" class="small">批量打标签</button>
+                  <button id="btn-preview-batch-exclude" type="button" class="small danger">排除选中</button>
+                </div>
+              </div>
+              <div id="preview-photo-rows" class="col-flex scroll-y grow" style="gap:6px;padding-right:2px"></div>
+            </div>
+          </div>
+
+          <div class="step-footer">
+            <div class="step-footer-left">
+              <button id="btn-back-to-rules" type="button">← 上一步：分类与命名</button>
+            </div>
+            <div id="preview-footer-hint" class="step-footer-hint">核对每张图片的目标路径与分类，确认无误后进入归档</div>
+            <div class="step-footer-right">
+              <button id="btn-goto-archive" type="button" class="primary">下一步：核对与归档 →</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Advanced Single-Photo Fine-Tuning Surface -->
+        <div id="preview-detail" class="col-flex grow hidden" style="min-height:0;gap:10px">
+          <div class="batch-toolbar" style="padding:8px 12px">
+            <div class="row-flex" style="flex-wrap:wrap;justify-content:space-between;width:100%">
+              <div class="row-flex" style="flex-wrap:wrap">
+                <button id="btn-back-to-preview-batch" type="button" class="small">← 返回列表预览</button>
+                <span style="font-weight:700">筛选分类：</span>
+                <select id="detail-group-select" style="min-width:150px"></select>
+                <span id="detail-group-stats" class="pill info"></span>
+                <div class="seg-tabs">
+                  <button id="btn-view-single" type="button" class="active">看大图精修</button>
+                  <button id="btn-view-grid" type="button">缩略图网格多选</button>
+                </div>
+              </div>
+              <div class="row-flex">
+                <button id="btn-detail-prev" type="button" class="small">← 上张</button>
+                <button id="btn-detail-next" type="button" class="small">下张 →</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="photo-workbench">
+            <div class="stage-wrap">
+              <div id="photo-single-stage" class="card col-flex grow" style="min-height:0;padding:10px;gap:8px">
+                <div class="row-flex" style="justify-content:space-between;flex-wrap:wrap">
+                  <div class="row-flex">
+                    <span id="stage-photo-name" style="font-weight:700"></span>
+                    <span id="stage-photo-time" class="muted mono" style="font-size:13.5px"></span>
+                    <span id="stage-quality-pill" class="pill hidden"></span>
+                    <span id="stage-review-pill" class="pill warn hidden">待复核</span>
+                    <button id="btn-ack-review" type="button" class="small hidden">已核对无误</button>
+                  </div>
+                  <div class="row-flex" style="flex-wrap:wrap">
+                    <button id="btn-zoom-fit" type="button" class="small">适应窗口</button>
+                    <button id="btn-zoom-actual" type="button" class="small">放大预览</button>
+                    <button id="btn-open-original" type="button" class="small">打开原文件</button>
+                    <button id="btn-rotate" type="button" class="small">旋转 90°</button>
+                    <button id="btn-exclude-cur" type="button" class="small danger">排除此图</button>
+                  </div>
+                </div>
+
+                <div id="viewer-canvas" class="viewer-canvas grow">
+                  <img id="viewer-img" alt="当前待归档图片预览" />
+                  <div id="viewer-empty" class="muted hidden">暂无图片或无法生成缩略图</div>
+                </div>
+
+                <div class="row-flex" style="justify-content:space-between;font-size:13.5px;flex-wrap:wrap">
+                  <span id="stage-target-path" class="pill info mono">目标路径：-</span>
+                  <span id="stage-order-note" class="muted"></span>
+                </div>
+              </div>
+
+              <div id="photo-grid-stage" class="card col-flex grow hidden" style="min-height:0">
+                <div class="row-flex" style="justify-content:space-between;flex-wrap:wrap;background:var(--surface-subtle);padding:8px 10px;border-radius:8px">
+                  <span id="grid-select-info" class="muted" style="font-size:13.5px">按住 Ctrl 点选、Shift 连选缩略图可批量调整</span>
+                  <div class="row-flex">
+                    <button id="btn-multi-confirm" type="button" class="small">批量确认</button>
+                    <button id="btn-multi-restore" type="button" class="small">批量恢复</button>
+                    <button id="btn-multi-exclude" type="button" class="small danger">批量排除</button>
+                  </div>
+                </div>
+                <div id="photo-grid-box" class="photo-grid-box grow"></div>
+              </div>
+
+              <div id="filmstrip-box" class="filmstrip"></div>
+            </div>
+
+            <!-- Right Panel: Single Photo Group / Tag / Custom Name Override -->
+            <div class="card col-flex" style="min-height:0;gap:10px">
+              <div class="card-header">
+                <h2 class="card-title">单张精细调整</h2>
+                <span class="muted" style="font-size:13px">快捷键 1~9 打标签</span>
+              </div>
+
+              <div class="col-flex" style="gap:6px">
+                <label for="detail-assign-group" style="font-size:13px;font-weight:600">所属分类：</label>
+                <select id="detail-assign-group"></select>
+              </div>
+
+              <div class="col-flex" style="gap:6px">
+                <label for="detail-custom-name" style="font-size:13px;font-weight:600">自定义文件名（留空则使用规则）：</label>
+                <div class="row-flex">
+                  <input id="detail-custom-name" class="grow" placeholder="输入自定义文件主干名" />
+                  <button id="btn-save-custom-name" type="button" class="small">应用</button>
+                </div>
+              </div>
+
+              <div class="row-flex">
+                <input id="palette-search" class="grow" placeholder="搜索标签..." />
+                <button id="btn-clear-tag" type="button" class="small">清除标签</button>
+              </div>
+              <div id="palette-list" class="col-flex scroll-y grow" style="gap:6px"></div>
+            </div>
+          </div>
+
+          <div class="step-footer">
+            <div class="step-footer-left">
+              <button id="btn-detail-back-batch" type="button">← 返回列表预览</button>
+            </div>
+            <div class="step-footer-hint">精细调整完成后可直接进入核对与归档</div>
+            <div class="step-footer-right">
+              <button id="btn-detail-goto-archive" type="button" class="primary">下一步：核对与归档 →</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 4: 核对与执行归档 -->
+      <section id="step-archive" class="view-panel hidden">
+        <div class="archive-grid">
+          <div class="stat-card"><div class="muted">待归档图片</div><div id="arch-stat-ready" class="stat-value">0</div></div>
+          <div class="stat-card"><div class="muted">待处理 / 冲突</div><div id="arch-stat-issues" class="stat-value" style="color:var(--warn)">0</div></div>
+          <div class="stat-card"><div class="muted">磁盘可用 / 预计占用</div><div id="arch-stat-disk" class="stat-value" style="font-size:16px;padding-top:4px">-</div></div>
+          <div class="stat-card"><div class="muted">安全保障</div><div style="font-weight:700;padding-top:4px;color:var(--ok)">只读原图 · 原子复制 · 绝不覆盖</div></div>
+        </div>
+
+        <div class="card col-flex" style="gap:10px">
+          <div class="row-flex" style="flex-wrap:wrap;justify-content:space-between">
+            <div class="row-flex grow" style="min-width:260px">
+              <span style="font-weight:700;white-space:nowrap">源文件夹：</span>
+              <span id="arch-source-display" class="mono muted grow" style="word-break:break-all">-</span>
+            </div>
+            <div class="row-flex" style="flex-wrap:wrap;gap:10px">
+              <label class="row-flex muted" style="font-size:13.5px;cursor:pointer">
+                <input id="chk-skip-existing" type="checkbox" />
+                <span>跳过目标已存在文件</span>
+              </label>
+              <label class="row-flex muted" style="font-size:13.5px;cursor:pointer">
+                <input id="chk-partial-archive" type="checkbox" />
+                <span>仅归档已就绪部分</span>
+              </label>
+              <label class="row-flex muted" style="font-size:13.5px;cursor:pointer">
+                <input id="chk-strict-hash" type="checkbox" />
+                <span>严格 SHA-256 校验</span>
+              </label>
+              <button id="btn-arch-inspect-quality" type="button" class="small">画质检测</button>
+              <button id="btn-rebuild-plan" type="button" class="small">刷新检查</button>
+            </div>
+          </div>
+          <div class="row-flex" style="flex-wrap:wrap">
+            <span style="font-weight:700;white-space:nowrap">目标输出目录：</span>
+            <input id="output-root-input" class="grow" placeholder="请选择归档输出根目录" readonly />
+            <button id="btn-pick-output" type="button">修改输出位置</button>
+          </div>
+        </div>
+
+        <div id="copy-progress-card" class="card hidden">
+          <div class="row-flex" style="justify-content:space-between">
+            <span id="copy-progress-text" style="font-weight:600">正在安全复制归档...</span>
+            <button id="btn-cancel-copy" type="button" class="small danger">取消复制</button>
+          </div>
+          <div class="progress-track" style="max-width:none;margin-top:8px"><div id="copy-progress-fill" class="progress-fill"></div></div>
+        </div>
+
+        <div class="archive-split">
+          <div class="card col-flex" style="min-height:0">
+            <div class="card-header">
+              <h2 class="card-title">检查汇总与问题定位</h2>
+              <span id="archive-board-status" class="pill">等待检查</span>
+            </div>
+            <div id="archive-board" class="col-flex scroll-y grow"></div>
+          </div>
+
+          <div class="card col-flex" style="min-height:0">
+            <div class="card-header" style="flex-wrap:wrap;gap:6px">
+              <div class="row-flex" style="gap:6px">
+                <h2 class="card-title">目标路径预览 & 归档结果</h2>
+                <span id="arch-preview-count-pill" class="pill info">0 条映射</span>
+              </div>
+              <div class="row-flex" style="gap:6px;flex-wrap:wrap">
+                <button id="btn-arch-toggle-all-secs" type="button" class="small">全部折叠</button>
+                <button id="btn-arch-export-plan" type="button" class="small">导出预期清单</button>
+              </div>
+            </div>
+            <div class="row-flex arch-preview-filter-bar">
+              <input id="arch-preview-search" class="grow" placeholder="搜索原文件名 / 分类 / 目标文件名..." />
+              <label class="row-flex muted" style="font-size:13.5px;cursor:pointer;white-space:nowrap">
+                <input id="chk-arch-preview-abnormal" type="checkbox" />
+                <span>仅看异常/跳过</span>
+              </label>
+            </div>
+            <div id="archive-result-box" class="col-flex scroll-y grow"></div>
+          </div>
+        </div>
+
+        <div class="step-footer">
+          <div class="step-footer-left">
+            <button id="btn-back-to-preview" type="button">← 上一步：预览与调整</button>
+          </div>
+          <div id="archive-footer-hint" class="step-footer-hint">确认无阻断冲突后即可执行安全归档</div>
+          <div class="step-footer-right">
+            <button id="btn-execute-archive" type="button" class="primary" disabled>确认并执行归档</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tool View: 分类方案库 -->
+      <section id="view-presets" class="view-panel hidden">
+        <div class="card row-flex" style="justify-content:space-between;flex-wrap:wrap">
+          <div class="row-flex">
+            <button type="button" class="small" data-back-work="1">← 返回流程</button>
+            <h2 class="card-title">分类方案库（含通用示例）</h2>
+            <span id="preset-count-pill" class="pill info">0 套</span>
+          </div>
+          <div class="row-flex" style="flex-wrap:wrap">
+            <input id="preset-search-input" placeholder="搜索方案名称/场景/分类..." style="width:210px" />
+            <button id="btn-preset-new" type="button" class="primary small">＋ 新建方案</button>
+            <button id="btn-preset-import" type="button" class="small">导入</button>
+            <button id="btn-preset-export" type="button" class="small">导出</button>
+          </div>
+        </div>
+        <div id="presets-manage-list" class="col-flex scroll-y grow" style="gap:8px"></div>
+      </section>
+
+      <!-- Tool View: 自定义标签库 -->
+      <section id="view-tags" class="view-panel hidden">
+        <div class="card row-flex" style="justify-content:space-between;flex-wrap:wrap">
+          <div class="row-flex">
+            <button type="button" class="small" data-back-work="1">← 返回流程</button>
+            <h2 class="card-title">自定义标签库（含通用示例）</h2>
+            <span id="tag-count-pill" class="pill info">0 条</span>
+          </div>
+          <div class="row-flex" style="flex-wrap:wrap">
+            <input id="tag-search-input" placeholder="搜索标签/别名..." style="width:200px" />
+            <button id="btn-tag-add" type="button" class="primary small">＋ 新增标签</button>
+            <button id="btn-tag-import" type="button" class="small">导入</button>
+            <button id="btn-tag-export" type="button" class="small">导出</button>
+          </div>
+        </div>
+        <div id="tags-manage-list" class="col-flex scroll-y grow" style="gap:6px"></div>
+      </section>
+
+      <!-- Tool View: 任务模板复用 -->
+      <section id="view-templates" class="view-panel hidden">
+        <div class="card row-flex" style="justify-content:space-between;flex-wrap:wrap">
+          <div class="row-flex">
+            <button type="button" class="small" data-back-work="1">← 返回流程</button>
+            <h2 class="card-title">任务模板复用</h2>
+          </div>
+          <button id="btn-tpl-save-current" type="button" class="primary small">保存当前任务配置为模板</button>
+        </div>
+        <div id="templates-manage-list" class="col-flex scroll-y grow" style="gap:8px"></div>
+      </section>
+
+      <!-- Tool View: 草稿与归档历史 -->
+      <section id="view-history" class="view-panel hidden">
+        <div class="card row-flex" style="justify-content:space-between">
+          <div class="row-flex">
+            <button type="button" class="small" data-back-work="1">← 返回流程</button>
+            <h2 class="card-title">任务草稿与归档历史</h2>
+          </div>
+        </div>
+        <div id="history-manage-list" class="col-flex scroll-y grow" style="gap:8px"></div>
+      </section>
+
+      <!-- Tool View: 软件设置与诊断 -->
+      <section id="view-settings" class="view-panel hidden">
+        <div class="card col-flex scroll-y grow" style="gap:14px">
+          <div class="row-flex">
+            <button type="button" class="small" data-back-work="1">← 返回流程</button>
+            <h2 class="card-title">软件设置与运行诊断</h2>
+          </div>
+
+          <div class="row-flex" style="flex-wrap:wrap">
+            <span style="width:160px;font-weight:600">默认归档目录：</span>
+            <input id="setting-output-root" readonly class="grow" />
+            <button id="btn-setting-pick-out" type="button" class="small">选择文件夹</button>
+            <button id="btn-setting-clear-out" type="button" class="small">清除记忆</button>
+          </div>
+
+          <div class="row-flex">
+            <label for="setting-open-after" style="width:160px;font-weight:600">归档后打开目录：</label>
+            <input id="setting-open-after" type="checkbox" />
+          </div>
+
+          <div class="row-flex">
+            <label for="setting-retention" style="width:160px;font-weight:600">草稿保留天数：</label>
+            <input id="setting-retention" type="number" min="1" max="3650" style="width:110px" />
+            <button id="btn-setting-cleanup" type="button" class="small">清理过期记录</button>
+          </div>
+
+          <div class="row-flex" style="flex-wrap:wrap;border-top:1px solid var(--border);padding-top:12px">
+            <button id="btn-clear-thumb-cache" type="button" class="small">清理缩略图缓存</button>
+            <button id="btn-run-diagnostics" type="button" class="small">运行自检诊断</button>
+            <span style="width:1px;height:22px;background:var(--border);margin:0 4px"></span>
+            <button id="btn-clear-history" type="button" class="small danger">清空全部历史</button>
+          </div>
+          <div id="cache-note-text" class="muted" style="font-size:13.5px"></div>
+          <pre id="diagnostics-box" class="card mono hidden" style="font-size:13px;white-space:pre-wrap;background:var(--surface-subtle)"></pre>
+        </div>
+      </section>
+
+      <!-- Tool View: 快速使用说明 -->
+      <section id="view-help" class="view-panel hidden">
+        <div class="card col-flex scroll-y grow" style="gap:10px">
+          <div class="row-flex">
+            <button type="button" class="small" data-back-work="1">← 返回流程</button>
+            <h2 class="card-title">图序归档 · 快速上手指南</h2>
+          </div>
+          <div><b>1. 导入与位置：</b>拖入或选择源图片文件夹，设置独立输出目录与任务名称；源文件夹全程只读不改动。</div>
+          <div><b>2. 分类与命名：</b>自由选择输出目录层级与组合命名规则（支持日期、分类、标签、原名、自定义前后缀与连续编号）；支持按时间、按数量、按预设方案或手动多选批量分组，同一分类可存放多张图片。</div>
+          <div><b>3. 预览与调整：</b>逐组核对预期目标路径，可按时间/文件名重排、批量移动分类、打标签，或进入大图精修模式单独改名与排除废片。</div>
+          <div><b>4. 核对与安全归档：</b>通过零覆盖校验与临时文件落盘确认后执行复制；支持中断恢复、CSV/JSON 清单导出及基于文件身份与 SHA-256 核对的安全撤销。</div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Native Modal Dialog -->
+  <dialog id="app-dialog" class="app-dialog" aria-labelledby="dialog-title">
+    <div class="modal-header">
+      <h2 id="dialog-title" class="card-title">提示</h2>
+      <button id="dialog-close" type="button" class="small ghost" aria-label="关闭对话框">✕</button>
+    </div>
+    <div id="dialog-body" class="modal-body"></div>
+    <div id="dialog-footer" class="modal-footer"></div>
+  </dialog>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

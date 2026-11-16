@@ -1,0 +1,9 @@
+[workspace]
+resolver = "2"
+members = ["crates/tuxu-core", "src-tauri", "launcher"]
+
+[workspace.package]
+version = "1.0.0"
+edition = "2021"
+license = "UNLICENSED"
+publish = false
